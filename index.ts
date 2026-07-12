@@ -1,14 +1,16 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import express, { Request, Response } from "express";
+import express, { Request, Response, Application } from "express";
 import cors from "cors";
 import { MongoClient, ObjectId, ServerApiVersion } from "mongodb";
+import Stripe from "stripe";
 
-const app = express();
-
+const app: Application = express();
 const PORT = process.env.PORT || 5000;
+
 const uri = process.env.MONGODB_URI as string;
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 app.use(cors());
 app.use(express.json());
@@ -31,6 +33,7 @@ async function run() {
     const AddProducts = db.collection("addproduct");
     const FavouriteCollection = db.collection("wishlist")
     const review = db.collection("reviews")
+    const ordersCollection = db.collection("buyHandy")
 
 
 //  add products ar jnno
@@ -225,6 +228,61 @@ app.get("/reviews",async(req,res)=>{
       res.send(result)
     })
 
+    // stripe payment
+
+
+
+// যদি Express ব্যবহার করো তাহলে এইভাবে:
+
+app.post("/orders", async (req: Request, res: Response) => {
+      try {
+        const { sessionId } = req.body;
+
+        if (!sessionId) {
+          return res.status(400).json({ error: "Session ID is required" });
+        }
+
+        const session = await stripe.checkout.sessions.retrieve(sessionId, {
+          expand: ["line_items"],
+        });
+
+        const orderData = {
+          orderId: session.metadata?.orderId || `ORD-${Date.now()}`,
+          transactionId: session.id,
+          customerEmail: session.customer_details?.email,
+          customerName: session.customer_details?.name,
+          totalAmount: session.amount_total ? session.amount_total / 100 : 0,
+          currency: session.currency?.toUpperCase(),
+          paymentStatus: session.payment_status,
+          orderStatus: "Confirmed",
+          items: session.line_items?.data.map((item: any) => ({
+            productName: item.description,
+            quantity: item.quantity || 1,
+            price: item.amount_total ? item.amount_total / 100 : 0,
+          })),
+          createdAt: new Date(),
+        };
+
+        const result = await ordersCollection.insertOne(orderData);
+
+        console.log("✅ Order Saved:", orderData.orderId);
+
+        res.status(201).json({
+          success: true,
+          insertedId: result.insertedId,
+          orderId: orderData.orderId,
+        });
+      } catch (error: any) {
+        console.error("Save Order Error:", error);
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+
+    app.get("/orders",async(req,res)=>{
+      const body = await ordersCollection.find().toArray();
+      res.send(body)
+    })
 
 
 
