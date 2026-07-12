@@ -30,6 +30,7 @@ async function run() {
     const db = client.db("Eco-world")
     const AddProducts = db.collection("addproduct");
     const FavouriteCollection = db.collection("wishlist")
+    const review = db.collection("reviews")
 
 
 //  add products ar jnno
@@ -210,6 +211,21 @@ app.post("/favourite", async (req, res) => {
 
 // filter purpose
 // GET http://localhost:5000/products
+
+// review system ar jnno
+
+app.get("/reviews",async(req,res)=>{
+      const result = await review.find().toArray()
+      res.send(result)
+    })
+
+     app.post("/reviews",async(req,res)=>{
+      const body = req.body;
+      const result = await review.insertOne(body)
+      res.send(result)
+    })
+
+
 
 
 
