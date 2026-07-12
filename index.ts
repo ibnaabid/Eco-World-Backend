@@ -40,10 +40,80 @@ async function run() {
       res.send(result)
     })
 
-    app.get("/products",async(req,res)=>{
-      const result = await AddProducts.find().toArray()
-      res.send(result)
-    })
+  app.get("/products", async (req, res) => {
+  try {
+    const {
+      search,
+      pickupAddress,
+      parcelType,
+      category,
+      priceRange,
+      sort,
+    } = req.query;
+
+    const query: any = {};
+
+    // Search by Product Name
+    if (search) {
+      query.productName = {
+        $regex: search,
+        $options: "i",
+      };
+    }
+
+    // Search by Pickup Address
+    if (pickupAddress) {
+      query.pickupAddress = {
+        $regex: pickupAddress,
+        $options: "i",
+      };
+    }
+
+    // Filter by Parcel Type
+    if (parcelType) {
+      query.parcelType = parcelType;
+    }
+
+    // Filter by Category
+    if (category) {
+      query.category = category;
+    }
+
+    // Filter by Price Range
+    if (priceRange) {
+      const [min, max] = (priceRange as string)
+        .split("-")
+        .map(Number);
+
+      query.price = {
+        $gte: min,
+        $lte: max,
+      };
+    }
+
+    // Sort
+    let sortOption: any = { _id: -1 };
+
+    if (sort === "low") {
+      sortOption = { price: 1 };
+    }
+
+    if (sort === "high") {
+      sortOption = { price: -1 };
+    }
+
+    const products = await AddProducts.find(query)
+      .sort(sortOption)
+      .toArray();
+
+    res.send(products);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      message: "Server Error",
+    });
+  }
+});
 
 // product manage korar jnno
 
@@ -115,6 +185,31 @@ app.post("/favourite", async (req, res) => {
 
   res.send(result);
 });
+
+
+ app.get("/favourite",async(req,res)=>{
+      const result = await FavouriteCollection.find().toArray()
+      res.send(result)
+    })
+
+
+    app.delete("/favourite/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await FavouriteCollection.deleteOne({
+      _id: new ObjectId(id),
+    });
+
+    res.send(result);
+  } catch (error) {
+    res.status(500).send({ error: "Delete failed" });
+  }
+});
+
+
+// filter purpose
+// GET http://localhost:5000/products
 
 
 
