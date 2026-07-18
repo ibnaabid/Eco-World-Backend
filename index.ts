@@ -56,33 +56,33 @@ async function run() {
     // ===========================
     // Get Single Food
     // ===========================
-    app.get("/menu/:id", async (req: Request, res: Response) => {
-      try {
-        const id = req.params.id as string;
+    // app.get("/menu/:id", async (req: Request, res: Response) => {
+    //   try {
+    //     const id = req.params.id as string;
 
-        if (!ObjectId.isValid(id)) {
-          return res.status(400).send({
-            message: "Invalid Food ID",
-          });
-        }
+    //     if (!ObjectId.isValid(id)) {
+    //       return res.status(400).send({
+    //         message: "Invalid Food ID",
+    //       });
+    //     }
 
-        const food = await foodsCollection.findOne({
-          _id: new ObjectId(id),
-        });
+    //     const food = await foodsCollection.findOne({
+    //       _id: new ObjectId(id),
+    //     });
 
-        if (!food) {
-          return res.status(404).send({
-            message: "Food not found",
-          });
-        }
+    //     if (!food) {
+    //       return res.status(404).send({
+    //         message: "Food not found",
+    //       });
+    //     }
 
-        res.send(food);
-      } catch (error) {
-        res.status(500).send({
-          message: "Something went wrong",
-        });
-      }
-    });
+    //     res.send(food);
+    //   } catch (error) {
+    //     res.status(500).send({
+    //       message: "Something went wrong",
+    //     });
+    //   }
+    // });
 
     // ===========================
     // Update Food
